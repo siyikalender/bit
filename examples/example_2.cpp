@@ -22,7 +22,7 @@ bit::storage
   <
     uint32_t,
     a,
-    // a2, // invalid since overlaps with a. Should not compile
+    // a2, // invalid since a2 overlaps with a. Should not compile
     b
   >
 > s1;
@@ -43,7 +43,7 @@ int main()
   
 //  s1.set<c>(); // invalid field "c" is not defined in the pack of s1. Should not compile
   
-   s2.clear<c, d>(); // valid
+  s2.clear<c, d>(); // valid
 
 //   s2.set<b>(); // invalid field "b" is not defined in the pack of s2. Should not compile
 
