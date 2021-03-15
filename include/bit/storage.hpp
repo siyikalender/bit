@@ -42,7 +42,8 @@ struct storage
   typedef Pack                        pack;
   typedef typename Pack::value_type   value_type;
   
-  storage() {}
+  storage() 
+  {}
   
   storage(const storage& other)
   : m_value(other)
@@ -75,9 +76,9 @@ struct storage
     return *this;
   }
 
-  /// Gets the current value of storage
+  /// Returns the current value of storage
   template<typename Field>
-  value_type get() const
+  value_type value_of() const
   {
     pack::template assert_if_not_exists<Field>();
     return bit::get<Field>(m_value);
@@ -87,7 +88,7 @@ struct storage
   template<typename Field>
   bool test() const
   {
-    return (get<Field>() > 0); 
+    return (value_of<Field>() > 0); 
   }
   
   const value_type value() const

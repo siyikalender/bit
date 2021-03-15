@@ -57,7 +57,7 @@ struct pack
   
   template<typename OtherField>
   static constexpr value_type
-  get_field_mask() 
+  get_field_mask_() 
   {
     return 0;
   }
@@ -92,7 +92,7 @@ struct pack<ValueType, Field, Fields...>
   template<typename OtherField>
   static constexpr void assert_if_not_exists()
   {
-    static_assert(exists<Field>(), "Field not in pack");
+    static_assert(exists<OtherField>(), "Field not in pack");
   }
 
   template<typename OtherField>
@@ -100,10 +100,33 @@ struct pack<ValueType, Field, Fields...>
   get_field_mask() 
   {
     assert_if_not_exists<OtherField>();
-    
-    return (std::is_same<field, OtherField>()) ? 
-      field_mask : 
-      next::template get_field_mask<OtherField>();
+
+    return get_field_mask_<OtherField>();
+  }
+
+  template<typename OtherField>
+  static constexpr value_type
+  get_field_mask_() 
+  {
+    return 
+      std::conditional
+      <
+        std::is_same
+        <
+          field, 
+          OtherField
+        >::value,
+        std::integral_constant
+        <
+          value_type, 
+          field_mask
+        >,
+        std::integral_constant
+        <
+          value_type, 
+          next::template get_field_mask_<OtherField>()
+        >
+      >::type::value;
   }
 
   static_assert(check == 0, "Fields overlap" );
