@@ -36,13 +36,17 @@ For more information, please refer to <http://unlicense.org>
 namespace bit
 {
 
-template<typename Pack>
+template
+<
+  typename Pack 
+>
 struct storage
 {
-  typedef Pack                        pack;
-  typedef typename Pack::value_type   value_type;
+  typedef Pack                          pack;
+  typedef typename Pack::value_type     value_type;
   
-  storage() 
+  explicit storage(const value_type v= 0)
+  : m_value(v)
   {}
   
   storage(const storage& other)
@@ -55,7 +59,8 @@ struct storage
   template<typename Field>
   storage& assign(value_type v)
   {
-    m_value &= ~pack::template get_field_mask<Field>();
+    value_type  mask = pack::template get_field_mask<Field>();
+    m_value &= ~mask;
     m_value |= bit::set<Field>(v);
     return *this;
   }
@@ -72,16 +77,19 @@ struct storage
   template<typename... Fields>
   storage& clear()
   {
-    m_value &= ~(pack::template get_field_mask<Fields>() | ...);
+    value_type  mask = (pack::template get_field_mask<Fields>() | ...);
+    m_value &= ~mask;
     return *this;
   }
 
-  /// Returns the current value of storage
+  /// Returns the current value of specified field in storage
   template<typename Field>
   value_type value_of() const
   {
     pack::template assert_if_not_exists<Field>();
-    return bit::get<Field>(m_value);
+
+    return 
+      bit::get<Field>(m_value);
   }
   
   /// Tests the value in field region. Returns true if value is greater than zero.
@@ -90,13 +98,14 @@ struct storage
   {
     return (value_of<Field>() > 0); 
   }
-  
+
+  /// Returns the current value of storage
   const value_type value() const
   {
     return m_value;
   }
 
-  value_type   m_value = value_type(0);
+  value_type   m_value;
 };
 
 } // namespace bit

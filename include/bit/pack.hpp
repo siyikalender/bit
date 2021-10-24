@@ -40,11 +40,49 @@ For more information, please refer to <http://unlicense.org>
 namespace bit
 {
 
+// partial template specialization for handling valid types
+// only uint8_t, uint16_t, uint32_t, uint64_t and structs/classes 
+// that has static value_type member is those types are valid.
+template <typename A>
+struct _value_type
+{
+  typedef typename A::value_type  type;
+};
+
+template <>
+struct _value_type<uint8_t> 
+{
+  typedef uint8_t type;
+};
+
+template <>
+struct _value_type<uint16_t> 
+{
+  typedef uint16_t type;
+};
+
+template <>
+struct _value_type<uint32_t> 
+{
+  typedef uint32_t type;
+};
+
+template <>
+struct _value_type<uint64_t> 
+{
+  typedef uint64_t type;
+};
+
 template <typename    ValueType, 
           typename... Fields>
 struct pack
 {
-  typedef   ValueType                  value_type;
+  typedef 
+    typename _value_type
+    <
+      typename _value_type<ValueType>::type
+    >::type
+      value_type;
 
   static constexpr value_type  mask      = 0;
 
@@ -68,9 +106,15 @@ template <typename    ValueType,
           typename... Fields>
 struct pack<ValueType, Field, Fields...>
 {
-  typedef   ValueType                    value_type;
-  typedef   pack<ValueType, Fields...>   next;
-  typedef   Field                        field;
+  typedef 
+    typename _value_type
+    <
+      typename _value_type<ValueType>::type
+    >::type
+      value_type;
+
+  typedef   pack<ValueType, Fields...>    next;
+  typedef   Field                         field;
  
   static constexpr value_type   field_mask = 
     mask_range<value_type>(field::first, field::last);
