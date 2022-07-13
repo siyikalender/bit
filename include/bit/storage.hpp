@@ -45,12 +45,12 @@ struct storage
   typedef Pack                          pack;
   typedef typename Pack::value_type     value_type;
   
-  explicit storage(const value_type v= 0)
+  explicit storage(const value_type v = 0)
   : m_value(v)
   {}
   
   storage(const storage& other)
-  : m_value(other)
+  : m_value(other.m_value)
   {}
   
   storage(storage&& other) = delete;
@@ -82,6 +82,14 @@ struct storage
     return *this;
   }
 
+  /// Clear all values in multiple field regions
+  template<typename... Fields>
+  storage& toggle()
+  {
+    m_value ^= (pack::template get_field_mask<Fields>() | ...);
+    return *this;
+  }
+
   /// Returns the current value of specified field in storage
   template<typename Field>
   value_type value_of() const
@@ -103,6 +111,13 @@ struct storage
   const value_type value() const
   {
     return m_value;
+  }
+  
+  /// Assignment operator
+  storage& operator =(const storage& other) 
+  {
+    m_value = other.m_value;
+    return *this;
   }
 
   value_type   m_value;
