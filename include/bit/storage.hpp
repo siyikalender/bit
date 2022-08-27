@@ -45,7 +45,7 @@ struct storage
   typedef Pack                          pack;
   typedef typename Pack::value_type     value_type;
   
-  explicit storage(const value_type v = 0)
+  constexpr storage(const value_type v = 0)
   : m_value(v)
   {}
   
@@ -63,6 +63,13 @@ struct storage
     m_value &= ~mask;
     m_value |= bit::set<Field>(v);
     return *this;
+  }
+
+  /// 
+  template<typename... Fields>
+  static constexpr value_type get_mask()
+  {
+    return (pack::template get_field_mask<Fields>() | ...);
   }
 
   /// Sets all values in multiple field regions
