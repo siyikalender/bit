@@ -36,6 +36,7 @@ For more information, please refer to <http://unlicense.org>
 
 #include <climits>
 #include <cstddef>
+#include <cstdint>
 
 namespace bit
 {
@@ -53,9 +54,28 @@ struct field
   static constexpr std::size_t first   = First;
   static constexpr std::size_t last    = Last;
   static constexpr std::size_t size    = Last - First + 1;
-  
+
   static_assert(last >= first, "First index cannot be greater than Last index" );
+
+  /// Largest value the field can hold
+  static constexpr std::uint64_t max =
+    size >= 64 ? ~std::uint64_t(0) : (std::uint64_t(1) << size) - 1;
 };
+
+/// True when v fits in Field, i.e. it has no bits set above Field::size
+template<typename Field, typename ValueType>
+constexpr bool fits(ValueType v)
+{
+  if constexpr (Field::size >= bit_width_of<ValueType>())
+  {
+    static_cast<void>(v);
+    return true;
+  }
+  else
+  {
+    return (v >> Field::size) == 0;
+  }
+}
 
 /// helper function to create bit mask (all one's) in specified range. For internal use only
 template<typename T>

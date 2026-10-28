@@ -60,7 +60,14 @@ int main()
   std::cout << "Test bit_1 : "    << s0.test<bit_1>()   << "\n";
   std::cout << "Test bit_2 : "    << s0.test<bit_2>()   << "\n";
   std::cout << "Test bit_3 : "    << s0.test<bit_3>()   << "\n";
-  std::cout << "Test field_1 : "  << s0.test<field_1>() << "\n";
+  std::cout << "Test field_1 : "  << s0.test<field_1>() << "\n\n";
+
+  // field_1 is 8 bits wide, so its largest value is field_1::max (255).
+  // assign asserts in debug builds when a value does not fit;
+  // checked_assign checks in every build mode and reports the result.
+  std::cout << "checked_assign 200 to field_1 : " << s0.checked_assign<field_1>(200) << "\n";
+  std::cout << "checked_assign 300 to field_1 : " << s0.checked_assign<field_1>(300) << "\n";
+  std::cout << "Value of field_1 -> " << s0.value_of<field_1>() << "\n";
 
   return 0;
 }

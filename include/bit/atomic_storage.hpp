@@ -132,11 +132,30 @@ public:
   }
 
   /// Atomically assigns the value in field region. Returns previous contents.
+  /// Asserts in debug builds when v does not fit in the field (see storage::assign).
   template<typename Field>
   storage_type assign(value_type v,
                       std::memory_order order = std::memory_order_seq_cst) noexcept
   {
     return modify([v](storage_type& s) { s.template assign<Field>(v); }, order);
+  }
+
+  /// Atomically assigns the value in field region only if it fits, in all
+  /// build modes. The check is done once, before any atomic operation;
+  /// returns false and leaves the value untouched when v exceeds Field::max.
+  template<typename Field>
+  bool checked_assign(value_type v,
+                      std::memory_order order = std::memory_order_seq_cst) noexcept
+  {
+    pack::template assert_if_not_exists<Field>();
+
+    if (!bit::fits<Field>(v))
+    {
+      return false;
+    }
+
+    assign<Field>(v, order);
+    return true;
   }
 
   /// Returns the current value of specified field

@@ -28,6 +28,30 @@ Compile time checks:
 - every field must fit in the pack value type,
 - the value type must be `uint8_t`, `uint16_t`, `uint32_t` or `uint64_t`.
 
+## Values that do not fit in a field
+
+`assign` asserts in debug builds when a value is larger than the field can
+hold, and is free of checks when `NDEBUG` is defined (the value is then
+truncated to the field width). In a constant expression an oversized value is
+a compile error in debug builds.
+
+`checked_assign` checks in every build mode. It writes nothing and returns
+`false` when the value does not fit:
+
+```cpp
+control c;
+
+if (!c.checked_assign<mode>(value_from_protocol))
+{
+  // value_from_protocol > mode::max
+}
+```
+
+`field::max` and `bit::fits<Field>(v)` are available for custom checks.
+`atomic_storage` and `register_ref` provide the same `assign` and
+`checked_assign`; `register_ref::checked_assign` does not access the
+register at all when the value does not fit.
+
 ## Hardware registers
 
 `bit/register.hpp` provides `bit::register_ref`, which applies a pack to a

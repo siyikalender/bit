@@ -101,11 +101,29 @@ public:
     store(s);
   }
 
-  /// Assigns the value in field region (read-modify-write)
+  /// Assigns the value in field region (read-modify-write).
+  /// Asserts in debug builds when v does not fit in the field (see storage::assign).
   template<typename Field>
   void assign(value_type v) const
   {
     modify([v](storage_type& s) { s.template assign<Field>(v); });
+  }
+
+  /// Assigns the value in field region only if it fits, in all build modes.
+  /// The check is done before the register is accessed, so on failure no
+  /// read or write happens; returns false when v exceeds Field::max.
+  template<typename Field>
+  bool checked_assign(value_type v) const
+  {
+    pack::template assert_if_not_exists<Field>();
+
+    if (!bit::fits<Field>(v))
+    {
+      return false;
+    }
+
+    assign<Field>(v);
+    return true;
   }
 
   /// Sets all bits in multiple field regions (read-modify-write)

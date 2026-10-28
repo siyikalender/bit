@@ -34,6 +34,8 @@ For more information, please refer to <http://unlicense.org>
 #ifndef BIT_STORAGE_HPP
 #define BIT_STORAGE_HPP
 
+#include <cassert>
+
 #include "field.hpp"
 #include "pack.hpp"
 
@@ -57,12 +59,33 @@ struct storage
   // stays trivially copyable and can be returned by value.
 
   /// Assigns the value in field region.
+  /// A value that does not fit in the field triggers an assert in debug
+  /// builds; with NDEBUG it is silently truncated to the field width.
+  /// Use checked_assign when the value is not known to fit.
   template<typename Field>
   constexpr storage& assign(value_type v)
   {
+    assert(bit::fits<Field>(v) && "value does not fit in field");
+
     const value_type  mask = pack::template get_field_mask<Field>();
     m_value = value_type((m_value & value_type(~mask)) | bit::set<Field>(v));
     return *this;
+  }
+
+  /// Assigns the value in field region only if it fits, in all build modes.
+  /// Returns false and leaves storage unchanged when v exceeds Field::max.
+  template<typename Field>
+  constexpr bool checked_assign(value_type v)
+  {
+    pack::template assert_if_not_exists<Field>();
+
+    if (!bit::fits<Field>(v))
+    {
+      return false;
+    }
+
+    assign<Field>(v);
+    return true;
   }
 
   /// Returns the combined mask of multiple field regions
