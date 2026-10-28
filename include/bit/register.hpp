@@ -126,6 +126,16 @@ public:
     return true;
   }
 
+  /// Assigns a compile time constant to field region (read-modify-write):
+  /// r.assign<mode, 2>(); A value that does not fit is a compile error.
+  template<typename Field, std::uint64_t Value>
+  void assign() const
+  {
+    static_assert(Value <= Field::max, "Value does not fit in field");
+
+    assign<Field>(value_type(Value));
+  }
+
   /// Sets all bits in multiple field regions (read-modify-write)
   template<typename... Fields>
   void set() const
@@ -159,6 +169,20 @@ public:
   bool test() const
   {
     return load().template test<Field>();
+  }
+
+  /// True when every listed field is non zero (one volatile read)
+  template<typename... Fields>
+  bool test_all() const
+  {
+    return load().template test_all<Fields...>();
+  }
+
+  /// True when at least one listed field is non zero (one volatile read)
+  template<typename... Fields>
+  bool test_any() const
+  {
+    return load().template test_any<Fields...>();
   }
 
 private:

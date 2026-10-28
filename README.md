@@ -17,9 +17,15 @@ struct mode   : bit::field<1, 2> {};   // bits 1..2 (last bit included)
 
 using control = bit::storage<bit::pack<uint32_t, enable, mode>>;
 
-constexpr control c = control().assign<mode>(2).set<enable>();
+constexpr control c = control().assign<mode, 2>().set<enable>();
 static_assert(c.value() == 0x5, "");
+static_assert(c.test_all<enable, mode>(), "");
+static_assert(c == control(0x5), "");
 ```
+
+Testing several fields at once: `test_all<F...>()` is true when every listed
+field is non zero, `test_any<F...>()` when at least one is. Storages of the
+same pack compare with `==` and `!=`.
 
 Compile time checks:
 
@@ -47,10 +53,20 @@ if (!c.checked_assign<mode>(value_from_protocol))
 }
 ```
 
+When the value is a compile time constant, `assign<Field, Value>()` checks
+it with a `static_assert`, so an oversized constant is a compile error in
+every build mode, at no run time cost:
+
+```cpp
+c.assign<mode, 3>();   // ok
+c.assign<mode, 4>();   // error: Value does not fit in field
+```
+
 `field::max` and `bit::fits<Field>(v)` are available for custom checks.
-`atomic_storage` and `register_ref` provide the same `assign` and
-`checked_assign`; `register_ref::checked_assign` does not access the
-register at all when the value does not fit.
+`atomic_storage` and `register_ref` provide the same `assign`,
+`assign<Field, Value>`, `checked_assign`, `test_all` and `test_any`;
+`register_ref::checked_assign` does not access the register at all when the
+value does not fit.
 
 ## Hardware registers
 

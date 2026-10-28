@@ -67,7 +67,18 @@ int main()
   // checked_assign checks in every build mode and reports the result.
   std::cout << "checked_assign 200 to field_1 : " << s0.checked_assign<field_1>(200) << "\n";
   std::cout << "checked_assign 300 to field_1 : " << s0.checked_assign<field_1>(300) << "\n";
-  std::cout << "Value of field_1 -> " << s0.value_of<field_1>() << "\n";
+  std::cout << "Value of field_1 -> " << s0.value_of<field_1>() << "\n\n";
+
+  // A compile time constant is checked by the compiler in every build mode
+  s0.assign<field_1, 0x7F>();
+  // s0.assign<field_1, 0x100>(); // invalid: does not fit in field_1. Should not compile
+
+  std::cout << "Value of field_1 -> " << std::hex << s0.value_of<field_1>() << std::dec << "\n";
+  std::cout << "Test all of bit_2, bit_3 : " << s0.test_all<bit_2, bit_3>() << "\n";
+  std::cout << "Test any of bit_1, bit_2 : " << s0.test_any<bit_1, bit_2>() << "\n";
+
+  auto s1 = s0;
+  std::cout << "Copy equals original : " << (s1 == s0) << "\n";
 
   return 0;
 }

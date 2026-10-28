@@ -88,6 +88,16 @@ struct storage
     return true;
   }
 
+  /// Assigns a compile time constant to field region: s.assign<mode, 2>();
+  /// A value that does not fit is a compile error in every build mode.
+  template<typename Field, std::uint64_t Value>
+  constexpr storage& assign()
+  {
+    static_assert(Value <= Field::max, "Value does not fit in field");
+
+    return assign<Field>(value_type(Value));
+  }
+
   /// Returns the combined mask of multiple field regions
   template<typename... Fields>
   static constexpr value_type get_mask()
@@ -133,13 +143,38 @@ struct storage
   template<typename Field>
   constexpr bool test() const
   {
-    return (value_of<Field>() > 0); 
+    return (value_of<Field>() > 0);
+  }
+
+  /// True when every listed field is non zero (each field tested like test())
+  template<typename... Fields>
+  constexpr bool test_all() const
+  {
+    return (test<Fields>() && ...);
+  }
+
+  /// True when at least one listed field is non zero
+  template<typename... Fields>
+  constexpr bool test_any() const
+  {
+    return (m_value & get_mask<Fields...>()) != 0;
   }
 
   /// Returns the current value of storage
   constexpr value_type value() const
   {
     return m_value;
+  }
+
+  /// Two storages are equal when their whole values are equal
+  friend constexpr bool operator==(const storage& a, const storage& b)
+  {
+    return a.m_value == b.m_value;
+  }
+
+  friend constexpr bool operator!=(const storage& a, const storage& b)
+  {
+    return !(a == b);
   }
 
 private:

@@ -158,6 +158,17 @@ public:
     return true;
   }
 
+  /// Atomically assigns a compile time constant to field region:
+  /// s.assign<mode, 2>(); A value that does not fit is a compile error.
+  /// Returns previous contents.
+  template<typename Field, std::uint64_t Value>
+  storage_type assign(std::memory_order order = std::memory_order_seq_cst) noexcept
+  {
+    static_assert(Value <= Field::max, "Value does not fit in field");
+
+    return assign<Field>(value_type(Value), order);
+  }
+
   /// Returns the current value of specified field
   template<typename Field>
   value_type value_of(std::memory_order order = std::memory_order_seq_cst) const noexcept
@@ -170,6 +181,20 @@ public:
   bool test(std::memory_order order = std::memory_order_seq_cst) const noexcept
   {
     return load(order).template test<Field>();
+  }
+
+  /// True when every listed field is non zero, from a single atomic load
+  template<typename... Fields>
+  bool test_all(std::memory_order order = std::memory_order_seq_cst) const noexcept
+  {
+    return load(order).template test_all<Fields...>();
+  }
+
+  /// True when at least one listed field is non zero, from a single atomic load
+  template<typename... Fields>
+  bool test_any(std::memory_order order = std::memory_order_seq_cst) const noexcept
+  {
+    return load(order).template test_any<Fields...>();
   }
 
   /// True when the operations are always lock free for this value type
