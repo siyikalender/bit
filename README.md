@@ -45,3 +45,24 @@ ctrl.modify([](auto& s) { s.template assign<mode>(3).template clear<enable>(); }
 
 Read-modify-write sequences are not atomic; protect them when a register is
 shared with an interrupt handler.
+
+## Thread safe storage
+
+`bit/atomic_storage.hpp` provides `bit::atomic_storage`, which keeps the value
+in a `std::atomic`. `set`, `clear` and `toggle` are single `fetch_or`,
+`fetch_and` and `fetch_xor` operations; `assign` and `modify` use a
+compare-exchange loop. Modifying operations return the previous contents, and
+every operation takes an optional `std::memory_order`:
+
+```cpp
+#include "bit/atomic_storage.hpp"
+
+bit::atomic_storage<bit::pack<uint32_t, enable, mode>> flags;
+
+flags.set<enable>();                                  // fetch_or
+auto before = flags.clear<enable>();                  // previous contents
+flags.modify([](auto& s) { s.template assign<mode>(s.template value_of<mode>() + 1); });
+```
+
+`modify` may call its function more than once under contention, so the
+function must not have side effects.

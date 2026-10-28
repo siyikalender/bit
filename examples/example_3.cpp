@@ -28,7 +28,8 @@ using test_storage_1 =
   >;
   
 // invalid: std::atomic is rejected, because storage keeps a plain copy of
-// the value and its operations would not be atomic
+// the value and its operations would not be atomic. Use
+// bit::atomic_storage<bit::pack<uint32_t, a, b>> instead (see example_5.cpp)
 using test_storage_2 =
   bit::storage
   <

@@ -51,12 +51,14 @@ struct always_false : std::false_type {};
 
 // Only uint8_t, uint16_t, uint32_t and uint64_t are valid pack value types.
 // std::atomic is intentionally rejected: storage keeps a plain copy of the
-// value, so operations on it would not be atomic.
+// value, so operations on it would not be atomic. Use bit::atomic_storage
+// (atomic_storage.hpp) for thread safe access instead.
 template <typename A>
 struct value_type_of
 {
   static_assert(always_false<A>::value,
-                "Pack value type must be uint8_t, uint16_t, uint32_t or uint64_t");
+                "Pack value type must be uint8_t, uint16_t, uint32_t or uint64_t "
+                "(for thread safety use bit::atomic_storage)");
   typedef A type;
 };
 
