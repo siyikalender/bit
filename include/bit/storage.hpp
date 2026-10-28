@@ -142,6 +142,9 @@ struct storage
     return m_value;
   }
 
+private:
+  // Read with value(); replace the whole value by assigning a new value,
+  // e.g. s = 0x12; (through the converting constructor).
   value_type   m_value;
 };
 
