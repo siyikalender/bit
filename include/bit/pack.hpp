@@ -34,8 +34,11 @@ For more information, please refer to <http://unlicense.org>
 #ifndef BIT_PACK_HPP
 #define BIT_PACK_HPP
 
+#include <cstdint>
 #include <type_traits>
 #include <utility>
+
+#include "field.hpp"
 
 namespace bit
 {
@@ -115,7 +118,10 @@ struct pack<ValueType, Field, Fields...>
 
   typedef   pack<ValueType, Fields...>    next;
   typedef   Field                         field;
- 
+
+  static_assert(field::last < bit_width_of<value_type>(),
+                "Field exceeds value type width");
+
   static constexpr value_type   field_mask = 
     mask_range<value_type>(field::first, field::last);
 

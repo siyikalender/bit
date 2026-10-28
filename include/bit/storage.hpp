@@ -33,6 +33,9 @@ For more information, please refer to <http://unlicense.org>
 #ifndef BIT_STORAGE_HPP
 #define BIT_STORAGE_HPP
 
+#include "field.hpp"
+#include "pack.hpp"
+
 namespace bit
 {
 
@@ -48,12 +51,9 @@ struct storage
   constexpr storage(const value_type v = 0)
   : m_value(v)
   {}
-  
-  storage(const storage& other)
-  : m_value(other.m_value)
-  {}
-  
-  storage(storage&& other) = delete;
+
+  // Copy and move operations are implicitly defined, so that storage
+  // stays trivially copyable and can be returned by value.
 
   /// Assigns the value in field region.
   template<typename Field>
@@ -118,13 +118,6 @@ struct storage
   const value_type value() const
   {
     return m_value;
-  }
-  
-  /// Assignment operator
-  storage& operator =(const storage& other) 
-  {
-    m_value = other.m_value;
-    return *this;
   }
 
   value_type   m_value;

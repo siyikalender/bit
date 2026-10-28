@@ -33,10 +33,18 @@ For more information, please refer to <http://unlicense.org>
 #ifndef BIT_FIELD_HPP
 #define BIT_FIELD_HPP
 
+#include <climits>
 #include <cstddef>
 
 namespace bit
 {
+
+/// Number of bits in type T. For internal use only
+template<typename T>
+constexpr std::size_t bit_width_of()
+{
+  return sizeof(T) * CHAR_BIT;
+}
 
 template<std::size_t First, std::size_t Last = First>
 struct field
@@ -55,12 +63,15 @@ mask_range(std::size_t First,
            std::size_t Last)
 {
   T result(0);
-  
-  for (std::size_t i = First; i <= Last; i++)
+
+  // Bits outside of T are ignored here, so that an out of range field
+  // never causes an undefined shift. pack rejects such fields with a
+  // static_assert.
+  for (std::size_t i = First; i <= Last && i < bit_width_of<T>(); i++)
   {
     result |= T(T(1) << i);
   }
-  
+
   return result;
 }
 
@@ -68,18 +79,18 @@ mask_range(std::size_t First,
 template<typename Field, typename ValueType>
 constexpr ValueType set(ValueType v)
 {
-  return 
-    (v << Field::first) & 
-      mask_range<ValueType>(Field::first, Field::last);
+  return ValueType(
+    ValueType(v << Field::first) &
+      mask_range<ValueType>(Field::first, Field::last));
 }
 
-/// Gets the value in field region. For internal use only 
+/// Gets the value in field region. For internal use only
 template<typename Field, typename ValueType>
 constexpr ValueType get(ValueType v)
 {
-  return 
-    (v & mask_range<ValueType>(Field::first, Field::last)) 
-      >> Field::first;
+  return ValueType(
+    ValueType(v & mask_range<ValueType>(Field::first, Field::last))
+      >> Field::first);
 }
 
 } // namespace bit
