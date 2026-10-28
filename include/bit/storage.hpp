@@ -57,49 +57,47 @@ struct storage
 
   /// Assigns the value in field region.
   template<typename Field>
-  storage& assign(value_type v)
+  constexpr storage& assign(value_type v)
   {
-    value_type  mask = pack::template get_field_mask<Field>();
-    m_value &= ~mask;
-    m_value |= bit::set<Field>(v);
+    const value_type  mask = pack::template get_field_mask<Field>();
+    m_value = value_type((m_value & value_type(~mask)) | bit::set<Field>(v));
     return *this;
   }
 
-  /// 
+  /// Returns the combined mask of multiple field regions
   template<typename... Fields>
   static constexpr value_type get_mask()
   {
-    return (pack::template get_field_mask<Fields>() | ...);
+    return value_type((pack::template get_field_mask<Fields>() | ...));
   }
 
   /// Sets all values in multiple field regions
   template<typename... Fields>
-  storage& set()
+  constexpr storage& set()
   {
-    m_value |= (pack::template get_field_mask<Fields>() | ...);
+    m_value = value_type(m_value | get_mask<Fields...>());
     return *this;
   }
 
-  /// Clear all values in multiple field regions
+  /// Clears all values in multiple field regions
   template<typename... Fields>
-  storage& clear()
+  constexpr storage& clear()
   {
-    value_type  mask = (pack::template get_field_mask<Fields>() | ...);
-    m_value &= ~mask;
+    m_value = value_type(m_value & value_type(~get_mask<Fields...>()));
     return *this;
   }
 
-  /// Clear all values in multiple field regions
+  /// Toggles all values in multiple field regions
   template<typename... Fields>
-  storage& toggle()
+  constexpr storage& toggle()
   {
-    m_value ^= (pack::template get_field_mask<Fields>() | ...);
+    m_value = value_type(m_value ^ get_mask<Fields...>());
     return *this;
   }
 
   /// Returns the current value of specified field in storage
   template<typename Field>
-  value_type value_of() const
+  constexpr value_type value_of() const
   {
     pack::template assert_if_not_exists<Field>();
 
@@ -109,13 +107,13 @@ struct storage
   
   /// Tests the value in field region. Returns true if value is greater than zero.
   template<typename Field>
-  bool test() const
+  constexpr bool test() const
   {
     return (value_of<Field>() > 0); 
   }
 
   /// Returns the current value of storage
-  const value_type value() const
+  constexpr value_type value() const
   {
     return m_value;
   }

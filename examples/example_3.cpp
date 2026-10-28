@@ -27,7 +27,8 @@ using test_storage_1 =
     >
   >;
   
-// valid
+// invalid: std::atomic is rejected, because storage keeps a plain copy of
+// the value and its operations would not be atomic
 using test_storage_2 =
   bit::storage
   <
@@ -72,20 +73,16 @@ int main()
         uint32_t
       >::value << "\n";
 
-  std::cout << 
-    std::is_same
-      <
-        test_storage_2::value_type, 
-        uint32_t
-      >::value << "\n";
+//  std::cout <<  // compile error
+//    std::is_same
+//      <
+//        test_storage_2::value_type,
+//        uint32_t
+//      >::value << "\n";
   
   test_storage_1 ts_1;
   
-  test_storage_2 ts_2;
-  
   ts_1.set<a>();
-  
-  ts_2.set<a>();
 
 //  std::cout <<  // compile error
 //    std::is_same

@@ -43,48 +43,36 @@ For more information, please refer to <http://unlicense.org>
 namespace bit
 {
 
-// partial template specialization for handling valid types
-// only uint8_t, uint16_t, uint32_t, uint64_t and structs/classes 
-// that has static value_type member is those types are valid.
+namespace detail
+{
+
+template <typename T>
+struct always_false : std::false_type {};
+
+// Only uint8_t, uint16_t, uint32_t and uint64_t are valid pack value types.
+// std::atomic is intentionally rejected: storage keeps a plain copy of the
+// value, so operations on it would not be atomic.
 template <typename A>
-struct _value_type
+struct value_type_of
 {
-  typedef typename A::value_type  type;
+  static_assert(always_false<A>::value,
+                "Pack value type must be uint8_t, uint16_t, uint32_t or uint64_t");
+  typedef A type;
 };
 
-template <>
-struct _value_type<uint8_t> 
-{
-  typedef uint8_t type;
-};
+template <> struct value_type_of<uint8_t>  { typedef uint8_t  type; };
+template <> struct value_type_of<uint16_t> { typedef uint16_t type; };
+template <> struct value_type_of<uint32_t> { typedef uint32_t type; };
+template <> struct value_type_of<uint64_t> { typedef uint64_t type; };
 
-template <>
-struct _value_type<uint16_t> 
-{
-  typedef uint16_t type;
-};
-
-template <>
-struct _value_type<uint32_t> 
-{
-  typedef uint32_t type;
-};
-
-template <>
-struct _value_type<uint64_t> 
-{
-  typedef uint64_t type;
-};
+} // namespace detail
 
 template <typename    ValueType, 
           typename... Fields>
 struct pack
 {
   typedef 
-    typename _value_type
-    <
-      typename _value_type<ValueType>::type
-    >::type
+    typename detail::value_type_of<ValueType>::type
       value_type;
 
   static constexpr value_type  mask      = 0;
@@ -110,10 +98,7 @@ template <typename    ValueType,
 struct pack<ValueType, Field, Fields...>
 {
   typedef 
-    typename _value_type
-    <
-      typename _value_type<ValueType>::type
-    >::type
+    typename detail::value_type_of<ValueType>::type
       value_type;
 
   typedef   pack<ValueType, Fields...>    next;
