@@ -28,6 +28,7 @@ For more information, please refer to <http://unlicense.org>
 */
 
 /// \author Selcuk Iyikalender
+/// \author Claude Opus 5.5 <noreply@anthropic.com>
 /// \date   2021
 
 #ifndef BIT_FIELD_HPP
