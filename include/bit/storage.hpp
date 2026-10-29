@@ -68,7 +68,7 @@ struct storage
     assert(bit::fits<Field>(v) && "value does not fit in field");
 
     const value_type  mask = pack::template get_field_mask<Field>();
-    m_value = value_type((m_value & value_type(~mask)) | bit::set<Field>(v));
+    m_value = value_type((m_value & bit::invert(mask)) | bit::set<Field>(v));
     return *this;
   }
 
@@ -117,7 +117,7 @@ struct storage
   template<typename... Fields>
   constexpr storage& clear()
   {
-    m_value = value_type(m_value & value_type(~get_mask<Fields...>()));
+    m_value = value_type(m_value & bit::invert(get_mask<Fields...>()));
     return *this;
   }
 

@@ -67,8 +67,11 @@ bit_compile_fail(field_exceeds_width     "Field exceeds value type width")
 bit_compile_fail(signed_value_type       "Pack value type must be uint8_t")
 bit_compile_fail(atomic_value_type       "for thread safety use bit::atomic_storage")
 bit_compile_fail(constant_does_not_fit   "Value does not fit in field")
+# Diagnostics quote with ' or, in a UTF-8 locale, with typographic quotes.
+# CMake regular expressions work on bytes and a typographic quote is several
+# bytes in UTF-8, so the patterns use .* where a quote may stand.
 bit_compile_fail(constexpr_assign_overflow
-  "constant expression|non-'constexpr'|did not evaluate to a constant")
+  "constant expression|call to non-.*constexpr|did not evaluate to a constant")
 bit_compile_fail(compare_different_packs
-  "operator==|invalid operands|binary '=='")
+  "operator==|invalid operands|binary .*==")
 bit_compile_fail(atomic_storage_copy     "deleted")

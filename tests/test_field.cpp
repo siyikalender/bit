@@ -62,6 +62,15 @@ static_assert(bit::fits<full64>(~std::uint64_t(0)), "");
 static_assert(!bit::fits<one>(std::uint32_t(2)), "");
 static_assert(bit::fits<one>(std::uint64_t(0)), "");
 
+// field::max of a field wider than 64 bits saturates instead of overflowing
+static_assert(bit::field<0, 99>::max == ~std::uint64_t(0), "");
+static_assert(bit::field<0, 62>::max == ~std::uint64_t(0) >> 1, "");
+
+// invert stays within the type
+static_assert(bit::invert(std::uint8_t(0x0F)) == 0xF0, "");
+static_assert(bit::invert(std::uint16_t(0)) == 0xFFFF, "");
+static_assert(bit::invert(~std::uint64_t(0)) == 0, "");
+
 // mask_range: bits outside the type are ignored
 static_assert(bit::mask_range<std::uint8_t>(4, 7) == 0xF0, "");
 static_assert(bit::mask_range<std::uint64_t>(0, 63) == ~std::uint64_t(0), "");

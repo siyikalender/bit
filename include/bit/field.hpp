@@ -37,6 +37,7 @@ For more information, please refer to <http://unlicense.org>
 #include <climits>
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 
 namespace bit
 {
@@ -48,6 +49,15 @@ constexpr std::size_t bit_width_of()
   return sizeof(T) * CHAR_BIT;
 }
 
+/// Bitwise complement of v within type T. Unlike T(~v) it involves no
+/// truncating cast after integer promotion, so compilers do not warn about
+/// it (e.g. MSVC C4310). For internal use only
+template<typename T>
+constexpr T invert(T v)
+{
+  return T((std::numeric_limits<T>::max)() ^ v);
+}
+
 template<std::size_t First, std::size_t Last = First>
 struct field
 {
@@ -57,9 +67,10 @@ struct field
 
   static_assert(last >= first, "First index cannot be greater than Last index" );
 
-  /// Largest value the field can hold
+  /// Largest value the field can hold. The shift count stays within 0..63
+  /// for every size, so no branch contains an out of range shift.
   static constexpr std::uint64_t max =
-    size >= 64 ? ~std::uint64_t(0) : (std::uint64_t(1) << size) - 1;
+    ~std::uint64_t(0) >> (64 - (size < 64 ? size : 64));
 };
 
 /// True when v fits in Field, i.e. it has no bits set above Field::size

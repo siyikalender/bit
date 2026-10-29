@@ -101,7 +101,7 @@ public:
   {
     return storage_type(
       m_value.fetch_and(
-        value_type(~storage_type::template get_mask<Fields...>()), order));
+        bit::invert(storage_type::template get_mask<Fields...>()), order));
   }
 
   /// Atomically toggles all bits in multiple field regions. Returns previous contents.

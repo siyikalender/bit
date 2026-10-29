@@ -40,7 +40,7 @@ jobs:
           # The Visual Studio generator picks the compiler itself
           - compiler: msvc
             os: windows-latest
-            werror: OFF
+            werror: ON
 
     steps:
       - uses: actions/checkout@v4

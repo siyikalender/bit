@@ -68,8 +68,8 @@ public:
   {}
 
   /// Binds to a register given by a pointer
-  explicit constexpr register_ref(volatile value_type* reg)
-  : m_reg(reg)
+  explicit constexpr register_ref(volatile value_type* pointer)
+  : m_reg(pointer)
   {}
 
   /// One volatile read of the whole register
