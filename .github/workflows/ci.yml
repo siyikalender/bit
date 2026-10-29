@@ -1,0 +1,128 @@
+# Continuous integration of the bit library
+#
+# This is free and unencumbered software released into the public domain.
+# For more information, please refer to <http://unlicense.org> and the
+# LICENSE file in the root of this repository.
+#
+# Author: Claude Opus 5.5 <noreply@anthropic.com>
+# Date:   2026
+
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  # Tests, compile failure tests and examples on the three major compilers
+  test:
+    name: ${{ matrix.compiler }} ${{ matrix.build_type }} C++${{ matrix.std }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [gcc, clang, msvc]
+        build_type: [Debug, Release]
+        std: [17, 20]
+        include:
+          - compiler: gcc
+            os: ubuntu-latest
+            cxx: g++
+            werror: ON
+          - compiler: clang
+            os: ubuntu-latest
+            cxx: clang++
+            werror: ON
+          # The Visual Studio generator picks the compiler itself
+          - compiler: msvc
+            os: windows-latest
+            werror: OFF
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        shell: bash
+        run: >
+          cmake -S . -B build
+          ${{ matrix.cxx && format('-DCMAKE_CXX_COMPILER={0}', matrix.cxx) || '' }}
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+          -DCMAKE_CXX_STANDARD=${{ matrix.std }}
+          -DBIT_WARNINGS_AS_ERRORS=${{ matrix.werror }}
+
+      - name: Build
+        run: cmake --build build --config ${{ matrix.build_type }} --parallel
+
+      - name: Test
+        working-directory: build
+        run: ctest -C ${{ matrix.build_type }} --output-on-failure --parallel 4
+
+  # Address, undefined behaviour and thread sanitizers
+  sanitizers:
+    name: gcc ${{ matrix.sanitizer }} sanitizer
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        sanitizer: [address, thread]
+        include:
+          - sanitizer: address
+            flags: -fsanitize=address,undefined -fno-sanitize-recover=undefined
+          - sanitizer: thread
+            flags: -fsanitize=thread
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: >
+          cmake -S . -B build
+          -DCMAKE_CXX_COMPILER=g++
+          -DCMAKE_BUILD_TYPE=Debug
+          -DBIT_WARNINGS_AS_ERRORS=ON
+          "-DCMAKE_CXX_FLAGS=${{ matrix.flags }} -fno-omit-frame-pointer"
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Test
+        working-directory: build
+        run: ctest --output-on-failure --parallel 4
+
+  # Bare metal ARM Cortex-M: the library must compile without exceptions,
+  # RTTI or an operating system
+  arm:
+    name: arm-none-eabi ${{ matrix.cpu }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        cpu: [cortex-m0plus, cortex-m4, cortex-m7]
+    env:
+      XPACK_VERSION: 13.3.1-1.1
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install xPack GNU Arm Embedded GCC
+        run: |
+          cd "$RUNNER_TEMP"
+          curl -sSfL -o arm-gcc.tar.gz \
+            "https://github.com/xpack-dev-tools/arm-none-eabi-gcc-xpack/releases/download/v${XPACK_VERSION}/xpack-arm-none-eabi-gcc-${XPACK_VERSION}-linux-x64.tar.gz"
+          tar xzf arm-gcc.tar.gz
+          echo "$RUNNER_TEMP/xpack-arm-none-eabi-gcc-${XPACK_VERSION}/bin" >> "$GITHUB_PATH"
+
+      - name: Compile
+        run: |
+          arm-none-eabi-g++ --version
+          for std in 17 20; do
+            arm-none-eabi-g++ -std=c++${std} -mcpu=${{ matrix.cpu }} -mthumb -Os \
+              -fno-exceptions -fno-rtti \
+              -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Werror \
+              -Iinclude -c tests/target/cortex_m.cpp -o cortex_m_cxx${std}.o
+            arm-none-eabi-size cortex_m_cxx${std}.o
+          done

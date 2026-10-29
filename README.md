@@ -106,3 +106,54 @@ flags.modify([](auto& s) { s.template assign<mode>(s.template value_of<mode>() +
 
 `modify` may call its function more than once under contention, so the
 function must not have side effects.
+
+## Using bit with CMake
+
+The library is the `INTERFACE` target `bit::bit`. Add the repository as a
+subdirectory (tests and examples are then not built):
+
+```cmake
+add_subdirectory(bit)
+target_link_libraries(my_app PRIVATE bit::bit)
+```
+
+or install it and use `find_package`:
+
+```sh
+cmake -S . -B build
+cmake --install build --prefix /path/to/install
+```
+
+```cmake
+find_package(bit REQUIRED)   # with CMAKE_PREFIX_PATH=/path/to/install
+target_link_libraries(my_app PRIVATE bit::bit)
+```
+
+Copying the `include` folder into a project works as well.
+
+## Building and running the tests
+
+```sh
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DBIT_WARNINGS_AS_ERRORS=ON
+cmake --build build
+ctest --test-dir build --output-on-failure
+```
+
+The tests cover:
+
+- run time behaviour of `storage`, `atomic_storage` (including concurrent
+  updates) and `register_ref`, in debug and release builds,
+- compile time checks: sources in `tests/compile_fail` must fail to compile
+  with the expected diagnostic,
+- the debug assertion of `assign`,
+- every public header compiling on its own,
+- the examples, run as smoke tests.
+
+Options: `BIT_BUILD_TESTS`, `BIT_BUILD_EXAMPLES` and `BIT_INSTALL` (on by
+default when bit is the top level project) and `BIT_WARNINGS_AS_ERRORS` (off
+by default).
+
+Continuous integration (`.github/workflows/ci.yml`) runs the tests with GCC,
+Clang and MSVC in debug and release builds for C++17 and C++20, under the
+address, undefined behaviour and thread sanitizers, and compiles
+`tests/target/cortex_m.cpp` for Cortex-M0+, M4 and M7 with `arm-none-eabi-g++`.
